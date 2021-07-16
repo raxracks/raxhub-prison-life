@@ -2076,9 +2076,39 @@ playerTab:AddSwitch("Infinite Stamina (unbelievably unreliable)", function(state
 	infiniteStamina = state
 end)
 
---[[playerTab:AddSwitch("Anti-Arrest", function(state)
-	antiArrest = state
-end)]]-- broken as fuck rn
+playerTab:AddLabel("Switch Team")
+
+playerTab:AddButton("Guards", function()
+    local args = {
+        [1] = "Bright blue"
+    }
+
+    workspace.Remote.TeamEvent:FireServer(unpack(args))
+end)
+
+playerTab:AddButton("Prisoners", function()
+    local args = {
+        [1] = "Bright orange"
+    }
+
+    workspace.Remote.TeamEvent:FireServer(unpack(args))
+end)
+
+playerTab:AddButton("Neutral", function()
+    local args = {
+        [1] = "Medium stone grey"
+    }
+
+    workspace.Remote.TeamEvent:FireServer(unpack(args))
+end)
+
+playerTab:AddButton("Criminals", function()
+    local args = {
+        [1] = "Really red"
+    }
+
+    workspace.Remote.TeamEvent:FireServer(unpack(args))
+end)
 
 combatTab:AddButton("Give All Items", function()
 	game.ReplicatedStorage.Tools["Sharpened stick"]:Clone().Parent = game.Players.LocalPlayer.Backpack
@@ -2087,13 +2117,12 @@ combatTab:AddButton("Give All Items", function()
 	prisonItems = game.Workspace.Prison_ITEMS
 
 	for i, v in pairs (prisonItems:GetChildren()) do
-		if v.Name == "giver" or "single" then
+		if v.Name == "giver" then
 			for i, d in pairs (v:GetChildren()) do
 				print(d.Name)
+				
 				if d.Name == "Riot Shield" or d.Name == "M4A1" or d.Name == "Ski mask" then
-					if game:GetService("MarketplaceService"):UserOwnsGamePassAsync(game.Players.LocalPlayer.UserId, 96651) then
-						game.Workspace.Remote.ItemHandler:InvokeServer(d.ITEMPICKUP)
-					end
+
 				else
 					game.Workspace.Remote.ItemHandler:InvokeServer(d.ITEMPICKUP)
 				end
@@ -2159,29 +2188,41 @@ function getCurrentGun()
 end
 
 function killAll()
-	if getCurrentGun() == nil then
-		warn("raxHub Error: Gun not found, are you sure you are holding a gun in your hand?")
+    local args = {
+        [1] = game:GetService("Players").LocalPlayer
+    }
+    
+	
+	for j, v in pairs(game.Players:GetPlayers()) do
+	    for i = 1, 25 do
+		    if(v.Name ~= game.Players.LocalPlayer.Name) then
+			    args[1] = v
+			    game.Players.LocalPlayer.Character:MoveTo(v.Character.Head.position)
+		    	game:GetService("ReplicatedStorage").meleeEvent:FireServer(unpack(args))
+		    end
+		    
+		    wait()
+	    end
+    wait()
 	end
+end
 
-	local args;
-
-	args = {
-    	[1] = {
-        	[1] = {
-            	["RayObject"] = Ray.new(Vector3.new(910.141968, 101.489998, 2393.10474), Vector3.new(-345.476654, 40.6554375, -488.869171)),
-            	["Distance"] = 55.560237884521,
-            	["Cframe"] = CFrame.new(893.699951, 103.248535, 2368.90723, -0.805308461, 0.0450060442, -0.591145396, 0, 0.997114539, 0.0759139359, 0.592856169, 0.0611341335, -0.802984595),
-            	["Hit"] = game.Players.LocalPlayer.Character.Torso,
-        	},
-   		},
-    	[2] = game.Players.LocalPlayer.Character[getCurrentGun().Name],
-	}
-
-	for i = 1, 10 do
-		for i, v in pairs(game.Players:GetPlayers()) do
-			args[1][1]["Hit"] = v.Character.Head
-			game:GetService("ReplicatedStorage").ShootEvent:FireServer(unpack(args))
+function arrestAll()
+    print("arrest all")
+    
+	local args = {
+        [1] = game:GetService("Players").LocalPlayer.Character.HumanoidRootPart
+    }
+    
+	for i, v in pairs(game.Players:GetPlayers()) do
+	    if(v.Name ~= game.Players.LocalPlayer.Name) then
+	        args[1] = v
+			game.Players.LocalPlayer.Character:MoveTo(v.Character.Head.position)
+		    workspace.Remote.arrest:InvokeServer(unpack(args))
+		    	
 		end
+		
+		wait(1)
 	end
 end
 
@@ -2189,9 +2230,17 @@ combatTab:AddButton("Kill All", function()
 	killAll()
 end)
 
+combatTab:AddButton("Arrest All", function()
+	arrestAll()
+end)
+
 combatTab:AddKeybind("Kill All Shortcut", function ()
 	killAll()
 end, {standard = Enum.KeyCode.V})
+
+combatTab:AddKeybind("Arrest All Shortcut", function ()
+	arrestAll()
+end, {standard = Enum.KeyCode.B})
 
 mapTab:Show()
 
@@ -2214,6 +2263,8 @@ function findNearestPlayer()
 end
 
 while wait() do
+    
+    
 	game.Players.LocalPlayer.Character.ClientInputHandler.Disabled = infiniteStamina
 
 	for i, v in pairs(getGuns()) do
@@ -2221,11 +2272,4 @@ while wait() do
 			weaponDropdownItemTable[v.Name] = weaponList:Add(v.Name)
 		end
 	end
-
-	--[[if antiArrest then
-		local closest = findNearestPlayer()
-		if closest.Team == game.Teams.Guards and closest:DistanceFromCharacter(game.Players.LocalPlayer.Character.Torso.Position) < 3 then
-			game.Players.LocalPlayer.Character:MoveTo(Vector3.new(game.Players.LocalPlayer.Character.Torso.Position.x + 1, game.Players.LocalPlayer.Character.Torso.Position.y, game.Players.LocalPlayer.Character.Torso.Position.z + 1))
-		end
-	end]]-- broken as fuck rn
 end
